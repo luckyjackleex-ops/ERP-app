@@ -17,8 +17,11 @@ import {
   Check, 
   X, 
   FileCheck,
-  Globe2
+  Globe2,
+  Wand2,
+  ShieldCheck
 } from 'lucide-react';
+import { AIListingModal } from './AIListingModal';
 
 interface ProductsViewProps {
   products: Product[];
@@ -42,6 +45,8 @@ export const ProductsView = ({
   const [inspectingProduct, setInspectingProduct] = useState<Product | null>(null);
   const [showPricingCalculator, setShowPricingCalculator] = useState(false);
   const [showNewProductModal, setShowNewProductModal] = useState(false);
+  const [showAIListingModal, setShowAIListingModal] = useState(false);
+  const [aiListingProduct, setAiListingProduct] = useState<Product | null>(null);
 
   // Pricing Calculator States
   const [calcCostRmb, setCalcCostRmb] = useState<number>(135);
@@ -167,6 +172,17 @@ export const ProductsView = ({
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setAiListingProduct(null);
+              setShowAIListingModal(true);
+            }}
+            className="px-3.5 py-1.5 rounded-lg border border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 text-indigo-700 text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <span>AI 智能刊登生成</span>
+          </button>
+
           <button
             onClick={() => setShowPricingCalculator(true)}
             className="px-3.5 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
@@ -633,6 +649,15 @@ export const ProductsView = ({
           </div>
         </div>
       )}
+
+      {/* AI Listing Generator Modal */}
+      <AIListingModal
+        isOpen={showAIListingModal}
+        onClose={() => setShowAIListingModal(false)}
+        defaultProductName={aiListingProduct?.nameCn || 'ANC 主动降噪头戴式蓝牙耳机 Pro'}
+        defaultCategory={aiListingProduct?.category || '3C数码配件'}
+        onShowToast={onShowToast}
+      />
     </div>
   );
 };

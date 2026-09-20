@@ -9,8 +9,12 @@ import {
   Clock, 
   User, 
   Sparkles, 
-  ExternalLink 
+  ExternalLink,
+  Loader2,
+  Lightbulb,
+  ShieldCheck
 } from 'lucide-react';
+import { generateAICustomerReply } from '../../services/aiService';
 
 interface SupportViewProps {
   messages: CustomerMessage[];
@@ -26,6 +30,8 @@ export const SupportView = ({
   const [selectedMessageId, setSelectedMessageId] = useState<string>(messages[0]?.id || '');
   const [replyDraft, setReplyDraft] = useState('');
   const [translatedDraft, setTranslatedDraft] = useState('');
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<{ analysis: string; suggestedAction: string } | null>(null);
 
   const activeMessage = messages.find(m => m.id === selectedMessageId) || messages[0];
 
@@ -53,12 +59,46 @@ export const SupportView = ({
     onShowToast('快捷话术已套用', '已自动填入中文草稿并完成外语对齐', 'info');
   };
 
+  const handleGenerateAIReply = async () => {
+    if (!activeMessage) return;
+    setIsGeneratingAI(true);
+    try {
+      const res = await generateAICustomerReply({
+        buyerMessage: activeMessage.message,
+        buyerName: activeMessage.buyerName,
+        storeName: activeMessage.storeName,
+        orderId: activeMessage.orderId,
+        targetLanguage: activeMessage.targetLanguage,
+        customInstructions: replyDraft.trim() || undefined,
+      });
+
+      if (res.data) {
+        setReplyDraft(res.data.replyChinese);
+        setTranslatedDraft(res.data.replyForeign);
+        setAiAnalysis({
+          analysis: res.data.analysis,
+          suggestedAction: res.data.suggestedAction,
+        });
+        onShowToast(
+          '后端 Gemini AI 拟定成功',
+          `已完成对【${activeMessage.buyerName}】的买家情绪研判并生成地道 ${activeMessage.targetLanguage} 答复`,
+          'success'
+        );
+      }
+    } catch (err: any) {
+      onShowToast('AI 答复生成异常', err.message || '请检查后端服务状态', 'error');
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
   const handleSendReply = () => {
     if (!replyDraft.trim()) return;
     onReplyMessage(activeMessage.id, translatedDraft || replyDraft);
     onShowToast('回复已发送', `已成功将多语言回复推送到 ${activeMessage.storeName} 买家信箱`, 'success');
     setReplyDraft('');
     setTranslatedDraft('');
+    setAiAnalysis(null);
   };
 
   return (
@@ -165,9 +205,51 @@ export const SupportView = ({
                 </div>
               </div>
 
-              {/* Quick Response Templates */}
-              <div>
-                <span className="text-xs font-bold text-slate-700 mb-2 block">快捷专业应答话术模版:</span>
+              {/* Quick Response Templates & Gemini AI Assist */}
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-700">智能回复与专业应答库:</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" />
+                      Gemini 服务端保密传输
+                    </span>
+                    <button
+                      onClick={handleGenerateAIReply}
+                      disabled={isGeneratingAI}
+                      className="px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      {isGeneratingAI ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Gemini AI 实时分析撰写中...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Gemini AI 智能撰写回复</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* AI Analysis Insight Banner (if generated) */}
+                {aiAnalysis && (
+                  <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                      <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Gemini 3.8 Flash 买家情绪与跟进策略研判:</span>
+                    </div>
+                    <p className="text-amber-800 text-[11px] leading-relaxed">
+                      <strong>情绪分析：</strong>{aiAnalysis.analysis}
+                    </p>
+                    <p className="text-amber-800 text-[11px] leading-relaxed">
+                      <strong>推荐动作：</strong>{aiAnalysis.suggestedAction}
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex flex-wrap gap-2">
                   {quickTemplates.map((t, idx) => (
                     <button

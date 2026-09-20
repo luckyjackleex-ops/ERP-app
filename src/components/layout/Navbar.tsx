@@ -13,7 +13,8 @@ import {
   User, 
   Check,
   Building2,
-  AlertTriangle
+  AlertTriangle,
+  ShieldCheck
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -231,6 +232,12 @@ export const Navbar = ({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Full-Stack AI Security Indicator */}
+        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span>全栈安全后端 · Gemini 3.8 Flash</span>
         </div>
 
         {/* User Role Badge */}
