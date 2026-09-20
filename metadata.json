@@ -1,0 +1,6 @@
+{
+  "name": "跨境电商ERP系统",
+  "description": "专业全链路跨境电商ERP系统，支持多平台店铺授权、商品刊登、智能订单流转、多仓库存协同、供应链采购、跨境物流轨迹追踪与财务利润精细化核算。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
